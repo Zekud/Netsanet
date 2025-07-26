@@ -21,12 +21,6 @@ const Home = () => {
   ];
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-
-    return (
-        <div className="bg-gradient-to-br from-primary-500 to-secondary-500 text-white">
-            {/* Hero Section */}
-            <section className="py-20 pt-24">
-
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) =>
@@ -36,6 +30,7 @@ const Home = () => {
 
     return () => clearInterval(interval);
   }, [images.length]);
+
   const features = [
     {
       icon: Scale,
@@ -79,44 +74,10 @@ const Home = () => {
     },
   ];
 
-    return (
-        <div className="bg-gradient-to-br from-primary-500 to-secondary-500 text-white">
-            {/* Hero Section */}
-            <section className="py-20 pt-24">
-
-                <div className="max-w-7xl mx-auto px-5">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-15 items-center">
-                        <div className="text-center lg:text-left">
-                            <h1 className="flex items-center gap-4 text-5xl font-bold mb-4">
-                                <Heart className="w-12 h-12" />
-                                Netsanet
-                            </h1>
-                            <p className="text-2xl mb-5 opacity-90">
-                                AI-Powered Support for Women in Ethiopia
-                            </p>
-                            <p className="text-lg mb-8 opacity-80 leading-relaxed">
-                                Get legal guidance, generate formal appeals, and connect with support organizations.
-                                You're not alone in your journey toward justice and empowerment.
-                            </p>
-                            <div className="flex gap-4 justify-center lg:justify-start">
-                                <Link to="/legal-advisor" className="btn btn-primary">
-                                    Get Legal Advice
-                                </Link>
-                                <Link to="/support-directory" className="btn btn-secondary">
-                                    Find Support
-                                </Link>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-center">
-                            <div className="w-80 h-80 bg-white/10 rounded-2xl backdrop-blur-lg flex items-center justify-center">
-                                <Shield className="w-32 h-32 text-white opacity-80" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section> */}
-
-      <section className="py-20 relative overflow-hidden">
+  return (
+    <div className="bg-gradient-to-br from-primary-500 to-secondary-500 text-white">
+      {/* Hero Section with Carousel */}
+      <section className="py-20 pt-24 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-5 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-15 items-center">
             <div className="text-center lg:text-left">
@@ -147,9 +108,8 @@ const Home = () => {
                 {images.map((image, index) => (
                   <div
                     key={index}
-                    className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                      index === currentImageIndex ? "opacity-100" : "opacity-0"
-                    }`}
+                    className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentImageIndex ? "opacity-100" : "opacity-0"
+                      }`}
                   >
                     <img
                       src={image}
@@ -167,11 +127,10 @@ const Home = () => {
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                        index === currentImageIndex
+                      className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentImageIndex
                           ? "bg-white shadow-lg scale-110"
                           : "bg-white/60 hover:bg-white/80"
-                      }`}
+                        }`}
                       aria-label={`Go to image ${index + 1}`}
                     />
                   ))}
