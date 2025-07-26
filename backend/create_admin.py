@@ -16,7 +16,7 @@ def create_admin_user(username: str, email: str, password: str):
         # Check if user already exists
         existing_user = db.query(User).filter(User.username == username).first()
         if existing_user:
-            print(f"❌ User '{username}' already exists!")
+            print(f"User '{username}' already exists!")
             return
         
         # Create admin user
@@ -31,20 +31,20 @@ def create_admin_user(username: str, email: str, password: str):
         db.add(admin_user)
         db.commit()
         
-        print(f"✅ Admin user created successfully!")
+        print(f"Admin user created successfully!")
         print(f"   Username: {username}")
         print(f"   Email: {email}")
         print(f"   Password: {password}")
         print(f"   Role: Admin")
         
     except Exception as e:
-        print(f"❌ Error creating admin user: {e}")
+        print(f"Error creating admin user: {e}")
         db.rollback()
     finally:
         db.close()
 
 if __name__ == "__main__":
-    print("🔐 Netsanet Admin User Creator")
+    print("Netsanet Admin User Creator")
     print("=" * 40)
     
     username = input("Enter username: ")
@@ -54,4 +54,4 @@ if __name__ == "__main__":
     if username and email and password:
         create_admin_user(username, email, password)
     else:
-        print("❌ All fields are required!") 
+        print("All fields are required!") 
