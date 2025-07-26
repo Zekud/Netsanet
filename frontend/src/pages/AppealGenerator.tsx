@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { FileText, Send, Copy, Download } from 'lucide-react';
+import { FileText, Send, Copy, Download, Edit, Eye } from 'lucide-react';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
 
 interface AppealGeneratorProps {
     setIsLoading: (loading: boolean) => void;
@@ -16,8 +17,10 @@ const AppealGenerator = ({ setIsLoading }: AppealGeneratorProps) => {
         evidence: '',
         contact_info: ''
     });
-    const [appealLetter, setAppealLetter] = useState('');
+    const [englishLetter, setEnglishLetter] = useState('');
+    const [amharicLetter, setAmharicLetter] = useState('');
     const [isGenerated, setIsGenerated] = useState(false);
+    const [editMode, setEditMode] = useState<'english' | 'amharic' | null>(null);
 
     const caseTypes = [
         'Domestic Violence',
@@ -49,7 +52,23 @@ const AppealGenerator = ({ setIsLoading }: AppealGeneratorProps) => {
         setIsLoading(true);
         try {
             const response = await axios.post('http://localhost:8000/api/generate-appeal', formData);
-            setAppealLetter(response.data.appeal_letter);
+
+            // Parse the response to separate English and Amharic versions
+            const content = response.data.appeal_letter;
+
+            // Split by language markers if they exist
+            const englishMatch = content.match(/English Version:?\s*([\s\S]*?)(?=Amharic Version:|$)/i);
+            const amharicMatch = content.match(/Amharic Version:?\s*([\s\S]*?)(?=English Version:|$)/i);
+
+            if (englishMatch && amharicMatch) {
+                setEnglishLetter(englishMatch[1].trim());
+                setAmharicLetter(amharicMatch[1].trim());
+            } else {
+                // If no clear separation, assume it's all English
+                setEnglishLetter(content.trim());
+                setAmharicLetter('');
+            }
+
             setIsGenerated(true);
         } catch (error) {
             console.error('Error generating appeal letter:', error);
@@ -59,21 +78,81 @@ const AppealGenerator = ({ setIsLoading }: AppealGeneratorProps) => {
         }
     };
 
-    const copyToClipboard = () => {
-        navigator.clipboard.writeText(appealLetter);
-        alert('Appeal letter copied to clipboard!');
+    const stripMarkdown = (text: string): string => {
+        return text
+            // Remove headers
+            .replace(/^#{1,6}\s+/gm, '')
+            // Remove bold/italic
+            .replace(/\*\*(.*?)\*\*/g, '$1')
+            .replace(/\*(.*?)\*/g, '$1')
+            .replace(/__(.*?)__/g, '$1')
+            .replace(/_(.*?)_/g, '$1')
+            // Remove code blocks
+            .replace(/```[\s\S]*?```/g, '')
+            .replace(/`([^`]+)`/g, '$1')
+            // Remove links
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+            // Remove list markers
+            .replace(/^[\s]*[-*+]\s+/gm, '')
+            .replace(/^[\s]*\d+\.\s+/gm, '')
+            // Remove blockquotes
+            .replace(/^>\s+/gm, '')
+            // Clean up extra whitespace
+            .replace(/\n\s*\n\s*\n/g, '\n\n')
+            .trim();
     };
 
-    const downloadLetter = () => {
-        const blob = new Blob([appealLetter], { type: 'text/plain' });
+    const copyToClipboard = (text: string, language: string) => {
+        const cleanText = stripMarkdown(text);
+        navigator.clipboard.writeText(cleanText);
+        alert(`${language} letter copied to clipboard!`);
+    };
+
+    const downloadLetter = (text: string, language: string) => {
+        const cleanText = stripMarkdown(text);
+        const blob = new Blob([cleanText], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `appeal-letter-${formData.name.replace(/\s+/g, '-')}.txt`;
+        a.download = `appeal-letter-${language}-${formData.name.replace(/\s+/g, '-')}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    };
+
+    const toggleEditMode = (language: 'english' | 'amharic') => {
+        setEditMode(editMode === language ? null : language);
+    };
+
+    const renderLetterContent = (content: string, language: string) => {
+        const isEditing = editMode === language;
+
+        return (
+            <div className="relative">
+                {isEditing ? (
+                    <textarea
+                        value={content}
+                        onChange={(e) => {
+                            if (language === 'english') {
+                                setEnglishLetter(e.target.value);
+                            } else {
+                                setAmharicLetter(e.target.value);
+                            }
+                        }}
+                        className="form-textarea font-mono text-sm"
+                        rows={15}
+                        placeholder={`${language} appeal letter will appear here...`}
+                    />
+                ) : (
+                    <div className="bg-white p-4 rounded-lg border border-gray-200 prose prose-sm max-w-none text-gray-900 leading-relaxed min-h-[300px]">
+                        <ReactMarkdown>
+                            {content || `No ${language} content available`}
+                        </ReactMarkdown>
+                    </div>
+                )}
+            </div>
+        );
     };
 
     return (
@@ -196,23 +275,86 @@ const AppealGenerator = ({ setIsLoading }: AppealGeneratorProps) => {
                         </form>
                     </div>
 
-                    {isGenerated && appealLetter && (
-                        <div className="card">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900">Your Appeal Letter</h2>
-                                <div className="flex gap-3">
-                                    <button onClick={copyToClipboard} className="btn btn-secondary btn-small">
-                                        <Copy className="w-4 h-4" />
-                                        Copy
-                                    </button>
-                                    <button onClick={downloadLetter} className="btn btn-secondary btn-small">
-                                        <Download className="w-4 h-4" />
-                                        Download
-                                    </button>
+                    {isGenerated && (
+                        <div className="space-y-6">
+                            {/* English Version */}
+                            <div className="card">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-xl font-bold text-gray-900">English Version</h3>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => toggleEditMode('english')}
+                                            className="btn btn-secondary btn-small"
+                                        >
+                                            {editMode === 'english' ? (
+                                                <>
+                                                    <Eye className="w-4 h-4" />
+                                                    View
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Edit className="w-4 h-4" />
+                                                    Edit
+                                                </>
+                                            )}
+                                        </button>
+                                        <button
+                                            onClick={() => copyToClipboard(englishLetter, 'English')}
+                                            className="btn btn-secondary btn-small"
+                                        >
+                                            <Copy className="w-4 h-4" />
+                                            Copy
+                                        </button>
+                                        <button
+                                            onClick={() => downloadLetter(englishLetter, 'English')}
+                                            className="btn btn-secondary btn-small"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                            Download
+                                        </button>
+                                    </div>
                                 </div>
+                                {renderLetterContent(englishLetter, 'english')}
                             </div>
-                            <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                                <pre className="whitespace-pre-wrap font-mono text-sm text-gray-900 leading-relaxed">{appealLetter}</pre>
+
+                            {/* Amharic Version */}
+                            <div className="card">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-xl font-bold text-gray-900">Amharic Version</h3>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => toggleEditMode('amharic')}
+                                            className="btn btn-secondary btn-small"
+                                        >
+                                            {editMode === 'amharic' ? (
+                                                <>
+                                                    <Eye className="w-4 h-4" />
+                                                    View
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Edit className="w-4 h-4" />
+                                                    Edit
+                                                </>
+                                            )}
+                                        </button>
+                                        <button
+                                            onClick={() => copyToClipboard(amharicLetter, 'Amharic')}
+                                            className="btn btn-secondary btn-small"
+                                        >
+                                            <Copy className="w-4 h-4" />
+                                            Copy
+                                        </button>
+                                        <button
+                                            onClick={() => downloadLetter(amharicLetter, 'Amharic')}
+                                            className="btn btn-secondary btn-small"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                            Download
+                                        </button>
+                                    </div>
+                                </div>
+                                {renderLetterContent(amharicLetter, 'amharic')}
                             </div>
                         </div>
                     )}

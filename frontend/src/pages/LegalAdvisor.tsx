@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Scale, Send, Copy, Download } from 'lucide-react';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
 
 interface LegalAdvisorProps {
     setIsLoading: (loading: boolean) => void;
@@ -47,13 +48,39 @@ const LegalAdvisor = ({ setIsLoading }: LegalAdvisorProps) => {
         }
     };
 
+    const stripMarkdown = (text: string): string => {
+        return text
+            // Remove headers
+            .replace(/^#{1,6}\s+/gm, '')
+            // Remove bold/italic
+            .replace(/\*\*(.*?)\*\*/g, '$1')
+            .replace(/\*(.*?)\*/g, '$1')
+            .replace(/__(.*?)__/g, '$1')
+            .replace(/_(.*?)_/g, '$1')
+            // Remove code blocks
+            .replace(/```[\s\S]*?```/g, '')
+            .replace(/`([^`]+)`/g, '$1')
+            // Remove links
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+            // Remove list markers
+            .replace(/^[\s]*[-*+]\s+/gm, '')
+            .replace(/^[\s]*\d+\.\s+/gm, '')
+            // Remove blockquotes
+            .replace(/^>\s+/gm, '')
+            // Clean up extra whitespace
+            .replace(/\n\s*\n\s*\n/g, '\n\n')
+            .trim();
+    };
+
     const copyToClipboard = () => {
-        navigator.clipboard.writeText(legalAdvice);
+        const cleanText = stripMarkdown(legalAdvice);
+        navigator.clipboard.writeText(cleanText);
         alert('Legal advice copied to clipboard!');
     };
 
     const downloadAdvice = () => {
-        const blob = new Blob([legalAdvice], { type: 'text/plain' });
+        const cleanText = stripMarkdown(legalAdvice);
+        const blob = new Blob([cleanText], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -127,8 +154,10 @@ const LegalAdvisor = ({ setIsLoading }: LegalAdvisorProps) => {
                                     </button>
                                 </div>
                             </div>
-                            <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                                <pre className="whitespace-pre-wrap font-mono text-sm text-gray-900 leading-relaxed">{legalAdvice}</pre>
+                            <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 prose prose-sm max-w-none text-gray-900 leading-relaxed">
+                                <ReactMarkdown>
+                                    {legalAdvice}
+                                </ReactMarkdown>
                             </div>
                         </div>
                     )}
