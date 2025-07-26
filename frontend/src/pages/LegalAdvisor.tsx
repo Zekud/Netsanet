@@ -48,13 +48,39 @@ const LegalAdvisor = ({ setIsLoading }: LegalAdvisorProps) => {
         }
     };
 
+    const stripMarkdown = (text: string): string => {
+        return text
+            // Remove headers
+            .replace(/^#{1,6}\s+/gm, '')
+            // Remove bold/italic
+            .replace(/\*\*(.*?)\*\*/g, '$1')
+            .replace(/\*(.*?)\*/g, '$1')
+            .replace(/__(.*?)__/g, '$1')
+            .replace(/_(.*?)_/g, '$1')
+            // Remove code blocks
+            .replace(/```[\s\S]*?```/g, '')
+            .replace(/`([^`]+)`/g, '$1')
+            // Remove links
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+            // Remove list markers
+            .replace(/^[\s]*[-*+]\s+/gm, '')
+            .replace(/^[\s]*\d+\.\s+/gm, '')
+            // Remove blockquotes
+            .replace(/^>\s+/gm, '')
+            // Clean up extra whitespace
+            .replace(/\n\s*\n\s*\n/g, '\n\n')
+            .trim();
+    };
+
     const copyToClipboard = () => {
-        navigator.clipboard.writeText(legalAdvice);
+        const cleanText = stripMarkdown(legalAdvice);
+        navigator.clipboard.writeText(cleanText);
         alert('Legal advice copied to clipboard!');
     };
 
     const downloadAdvice = () => {
-        const blob = new Blob([legalAdvice], { type: 'text/plain' });
+        const cleanText = stripMarkdown(legalAdvice);
+        const blob = new Blob([cleanText], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

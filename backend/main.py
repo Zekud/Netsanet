@@ -134,19 +134,29 @@ async def get_legal_advice(case: CaseDescription):
     try:
         prompt = f"""
         You are a legal advisor specializing in Ethiopian law and women's rights. 
-        Based on the Ethiopian Constitution and relevant laws, provide guidance for this case:
+        Based on the Ethiopian Constitution and relevant laws, provide clear, actionable guidance for this case.
         
         Case Description: {case.description}
         Region: {case.region or 'Not specified'}
         
-        Please provide:
-        1. Case classification (domestic violence, workplace discrimination, property rights, etc.)
-        2. Relevant rights under Ethiopian Constitution and laws
-        3. Recommended actions the person can take
-        4. Important legal considerations
-        5. Emergency contacts if needed
+        Provide structured advice in the following format:
         
-        Be supportive, clear, and provide practical advice. Focus on Ethiopian legal context.
+        CASE CLASSIFICATION:
+        [Classify the case type]
+        
+        YOUR RIGHTS:
+        [List relevant rights under Ethiopian Constitution and laws]
+        
+        RECOMMENDED ACTIONS:
+        [Step-by-step actions the person can take]
+        
+        LEGAL CONSIDERATIONS:
+        [Important legal points to consider]
+        
+        EMERGENCY CONTACTS:
+        [Relevant emergency contacts if needed]
+        
+        Be supportive, clear, and provide practical advice. Focus on Ethiopian legal context. Do not include any introductory text or explanations outside of the structured format above.
         """
         
         response = model.generate_content(prompt)
@@ -164,8 +174,9 @@ async def generate_appeal(form: AppealForm):
     """Generate a formal appeal letter using AI"""
     try:
         prompt = f"""
-        Generate a formal appeal letter in Amharic and English for the following case:
-        
+        Generate ONLY a formal appeal letter in both Amharic and English for the following case. Do not include any explanations, introductions, or additional text - just the letter content.
+
+        Case Details:
         Name: {form.name}
         Case Type: {form.case_type}
         Incident Date: {form.incident_date}
@@ -174,19 +185,20 @@ async def generate_appeal(form: AppealForm):
         Evidence: {form.evidence or 'Not provided'}
         Contact Information: {form.contact_info}
         
-        The letter should:
-        1. Be formal and professional
-        2. Include relevant Ethiopian legal references
-        3. Clearly state the complaint and requested actions
-        4. Be written in both Amharic and English
-        5. Follow proper legal letter format
+        Requirements:
+        - Write a formal, professional appeal letter
+        - Include relevant Ethiopian legal references
+        - Clearly state the complaint and requested actions
+        - Follow proper legal letter format
+        - Provide BOTH English and Amharic versions
         
-        Format the response as:
+        Format your response EXACTLY as follows (no other text):
+        
         ENGLISH VERSION:
-        [English letter content]
+        [Complete English appeal letter with proper formatting]
         
         AMHARIC VERSION:
-        [Amharic letter content]
+        [Complete Amharic appeal letter with proper formatting]
         """
         
         response = model.generate_content(prompt)
