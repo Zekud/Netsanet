@@ -43,7 +43,7 @@ const Home = () => {
     return (
         <div className="bg-gradient-to-br from-primary-500 to-secondary-500 text-white">
             {/* Hero Section */}
-            <section className="py-20">
+            <section className="py-20 pt-24">
                 <div className="max-w-7xl mx-auto px-5">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-15 items-center">
                         <div className="text-center lg:text-left">
