@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FileText, Send, Copy, Download } from 'lucide-react';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
 
 interface AppealGeneratorProps {
     setIsLoading: (loading: boolean) => void;
@@ -211,8 +212,10 @@ const AppealGenerator = ({ setIsLoading }: AppealGeneratorProps) => {
                                     </button>
                                 </div>
                             </div>
-                            <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                                <pre className="whitespace-pre-wrap font-mono text-sm text-gray-900 leading-relaxed">{appealLetter}</pre>
+                            <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 prose prose-sm max-w-none text-gray-900 leading-relaxed">
+                                <ReactMarkdown>
+                                    {appealLetter}
+                                </ReactMarkdown>
                             </div>
                         </div>
                     )}
