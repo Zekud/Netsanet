@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Filter, Heart } from 'lucide-react';
+import { BookOpen, Filter, Heart, CheckCircle, Clock } from 'lucide-react';
 import axios from 'axios';
 
 interface Story {
@@ -9,6 +9,7 @@ interface Story {
     category: string;
     region: string;
     outcome: string;
+    is_approved?: boolean;
 }
 
 const CaseStories = () => {
@@ -82,6 +83,18 @@ const CaseStories = () => {
         }
     };
 
+    const approveStory = async (storyId: number) => {
+        try {
+            await axios.post(`http://localhost:8000/api/approve-story/${storyId}`);
+            // Refresh stories after approval
+            fetchStories();
+            alert('Story approved successfully!');
+        } catch (error) {
+            console.error('Error approving story:', error);
+            alert('Error approving story. Please try again.');
+        }
+    };
+
     if (loading) {
         return (
             <div className="case-stories">
@@ -133,9 +146,17 @@ const CaseStories = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {filteredStories.map((story) => (
-                            <div key={story.id} className="card">
+                            <div key={story.id} className={`card ${story.is_approved === false ? 'border-l-4 border-yellow-500' : ''}`}>
                                 <div className="mb-5">
-                                    <h3 className="text-xl font-semibold text-gray-900 mb-3">{story.title}</h3>
+                                    <div className="flex justify-between items-start mb-3">
+                                        <h3 className="text-xl font-semibold text-gray-900">{story.title}</h3>
+                                        {story.is_approved === false && (
+                                            <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                                                <Clock className="w-3 h-3" />
+                                                Pending
+                                            </span>
+                                        )}
+                                    </div>
                                     <div className="flex gap-3">
                                         <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">
                                             {categoryLabels[story.category as keyof typeof categoryLabels]}
@@ -157,6 +178,16 @@ const CaseStories = () => {
                                             {story.outcome === 'positive' ? 'Positive Outcome' : 'Case Resolved'}
                                         </span>
                                     </div>
+
+                                    {story.is_approved === false && (
+                                        <button
+                                            onClick={() => approveStory(story.id)}
+                                            className="btn btn-primary btn-small"
+                                        >
+                                            <CheckCircle className="w-4 h-4" />
+                                            Approve
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
