@@ -31,7 +31,7 @@ const Navbar = () => {
     return (
         <nav className="bg-white shadow-lg fixed w-full top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-16">
+                <div className="flex justify-between h-16 min-h-[64px]">
                     {/* Logo and main nav */}
                     <div className="flex items-center">
                         <Link to="/" className="flex items-center space-x-2">
@@ -59,8 +59,8 @@ const Navbar = () => {
                                     key={item.path}
                                     to={item.path}
                                     className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${isActive(item.path)
-                                            ? 'border-primary-500 text-gray-900'
-                                            : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                        ? 'border-primary-500 text-gray-900'
+                                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                                         }`}
                                 >
                                     {item.label}
@@ -85,7 +85,7 @@ const Navbar = () => {
 
                                 {/* User Dropdown Menu */}
                                 {isUserMenuOpen && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                                         <div className="px-4 py-2 text-sm text-gray-700 border-b">
                                             <div className="font-medium">{user?.username}</div>
                                             <div className="text-gray-500">{user?.email}</div>
@@ -165,8 +165,8 @@ const Navbar = () => {
 
             {/* Mobile menu */}
             {isMenuOpen && (
-                <div className="md:hidden">
-                    <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
+                <div className="md:hidden absolute top-full left-0 right-0 z-50">
+                    <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t shadow-lg">
                         {navItems.map((item) => (
                             <Link
                                 key={item.path}
@@ -186,8 +186,8 @@ const Navbar = () => {
                                 key={item.path}
                                 to={item.path}
                                 className={`block px-3 py-2 rounded-md text-base font-medium ${isActive(item.path)
-                                        ? 'bg-primary-50 text-primary-700'
-                                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                                    ? 'bg-primary-50 text-primary-700'
+                                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                     }`}
                                 onClick={() => setIsMenuOpen(false)}
                             >
