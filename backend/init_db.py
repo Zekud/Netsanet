@@ -24,7 +24,7 @@ def init_db():
             )
             db.add(admin_user)
             db.commit()
-            print("✅ Admin user created: username='admin', password='admin123'")
+            print("Admin user created: username='admin', password='admin123'")
         
         # Check if organizations already exist
         existing_orgs = db.query(SupportOrganization).count()
@@ -119,12 +119,12 @@ def init_db():
                     db.add(story)
             
             db.commit()
-            print("✅ Database initialized with sample data!")
+            print("Database initialized with sample data!")
         else:
-            print("✅ Database already contains data, skipping initialization.")
+            print("Database already contains data, skipping initialization.")
             
     except Exception as e:
-        print(f"❌ Error initializing database: {e}")
+        print(f"Error initializing database: {e}")
         db.rollback()
     finally:
         db.close()
