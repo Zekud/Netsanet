@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Form
+from fastapi import FastAPI, HTTPException, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -7,13 +7,25 @@ import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 import json
+import re
+from sqlalchemy.orm import Session
+from database import get_db, engine
+from models import Base, Story, LegalAdviceRequest, AppealLetter, SupportOrganization, User
+from admin import router as admin_router
+from auth_routes import router as auth_router
+from auth import get_current_user, get_current_admin_user
+from init_db import init_db
 
 # Load environment variables
 load_dotenv()
+init_db()
 
 # Configure Gemini API
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash')
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Netsanet API", description="AI-Powered Support for Women in Ethiopia")
 
@@ -25,6 +37,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(auth_router)
+app.include_router(admin_router)
 
 # Pydantic models
 class CaseDescription(BaseModel):
@@ -46,91 +62,19 @@ class StorySubmission(BaseModel):
     category: str
     region: Optional[str] = None
 
-# Load support organizations data
-def load_support_organizations():
-    return {
-        "organizations": [
-            {
-                "name": "Ethiopian Women Lawyers Association (EWLA)",
-                "region": "Addis Ababa",
-                "services": ["Legal Aid", "Counseling", "Rights Education"],
-                "contact": "+251 11 123 4567",
-                "address": "Bole, Addis Ababa",
-                "website": "www.ewla.org.et"
-            },
-            {
-                "name": "Association for Women's Sanctuary and Development (AWSAD)",
-                "region": "Addis Ababa",
-                "services": ["Shelter", "Counseling", "Rehabilitation"],
-                "contact": "+251 11 987 6543",
-                "address": "Kazanchis, Addis Ababa",
-                "website": "www.awsad.org"
-            },
-            {
-                "name": "Tiruzer Ethiopia",
-                "region": "Addis Ababa",
-                "services": ["Legal Support", "Advocacy", "Training"],
-                "contact": "+251 11 456 7890",
-                "address": "Piazza, Addis Ababa",
-                "website": "www.tiruzer.org"
-            },
-            {
-                "name": "Women's Association of Tigray",
-                "region": "Tigray",
-                "services": ["Legal Aid", "Community Support", "Education"],
-                "contact": "+251 34 123 4567",
-                "address": "Mekelle, Tigray",
-                "website": "www.wat.org.et"
-            },
-            {
-                "name": "Oromia Women's Association",
-                "region": "Oromia",
-                "services": ["Legal Support", "Counseling", "Advocacy"],
-                "contact": "+251 22 987 6543",
-                "address": "Adama, Oromia",
-                "website": "www.owa.org.et"
-            }
-        ]
-    }
-
-# Load case stories
-def load_case_stories():
-    return {
-        "stories": [
-            {
-                "id": 1,
-                "title": "Finding Strength Through Legal Support",
-                "content": "After experiencing workplace discrimination, I reached out to EWLA. They provided me with legal guidance and helped me understand my rights under Ethiopian labor law. With their support, I was able to file a formal complaint and received compensation for the discrimination I faced.",
-                "category": "workplace_discrimination",
-                "region": "Addis Ababa",
-                "outcome": "positive"
-            },
-            {
-                "id": 2,
-                "title": "Domestic Violence - A Path to Freedom",
-                "content": "I was trapped in an abusive relationship for years. AWSAD provided me with shelter and counseling services. They helped me understand that I had rights and options. Today, I'm living independently and helping other women in similar situations.",
-                "category": "domestic_violence",
-                "region": "Addis Ababa",
-                "outcome": "positive"
-            },
-            {
-                "id": 3,
-                "title": "Property Rights Victory",
-                "content": "When my husband passed away, his family tried to take our property. Tiruzer Ethiopia helped me understand my inheritance rights under Ethiopian law. With their legal support, I successfully defended my property rights.",
-                "category": "property_rights",
-                "region": "Addis Ababa",
-                "outcome": "positive"
-            }
-        ]
-    }
-
 @app.get("/")
 async def root():
     return {"message": "Netsanet API - Supporting Women in Ethiopia"}
 
 @app.post("/api/legal-advice")
-async def get_legal_advice(case: CaseDescription):
+async def get_legal_advice(case: CaseDescription, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get AI-powered legal advice based on case description"""
+    if not model:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service not available. Please configure GEMINI_API_KEY in the .env file. Get your API key from: https://makersuite.google.com/app/apikey"
+        )
+    
     try:
         prompt = f"""
         You are a legal advisor specializing in Ethiopian law and women's rights. 
@@ -160,9 +104,21 @@ async def get_legal_advice(case: CaseDescription):
         """
         
         response = model.generate_content(prompt)
+        advice = response.text
+        
+        # Store the request in database with user_id
+        db_request = LegalAdviceRequest(
+            description=case.description,
+            region=case.region,
+            advice_generated=advice,
+            case_type="classified_by_ai",
+            user_id=current_user.id
+        )
+        db.add(db_request)
+        db.commit()
         
         return {
-            "advice": response.text,
+            "advice": advice,
             "case_type": "classified_by_ai",
             "timestamp": "2024-01-01T00:00:00Z"
         }
@@ -170,8 +126,14 @@ async def get_legal_advice(case: CaseDescription):
         raise HTTPException(status_code=500, detail=f"Error generating legal advice: {str(e)}")
 
 @app.post("/api/generate-appeal")
-async def generate_appeal(form: AppealForm):
+async def generate_appeal(form: AppealForm, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Generate a formal appeal letter using AI"""
+    if not model:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service not available. Please configure GEMINI_API_KEY in the .env file. Get your API key from: https://makersuite.google.com/app/apikey"
+        )
+    
     try:
         prompt = f"""
         Generate ONLY a formal appeal letter in both Amharic and English for the following case. Do not include any explanations, introductions, or additional text - just the letter content.
@@ -202,9 +164,33 @@ async def generate_appeal(form: AppealForm):
         """
         
         response = model.generate_content(prompt)
+        appeal_letter = response.text
+        
+        # Parse the response to separate English and Amharic versions
+        english_match = re.search(r'English Version:?\s*([\s\S]*?)(?=Amharic Version:|$)', appeal_letter, re.IGNORECASE)
+        amharic_match = re.search(r'Amharic Version:?\s*([\s\S]*?)(?=English Version:|$)', appeal_letter, re.IGNORECASE)
+        
+        english_letter = english_match.group(1).strip() if english_match else appeal_letter
+        amharic_letter = amharic_match.group(1).strip() if amharic_match else ""
+        
+        # Store the appeal letter in database with user_id
+        db_appeal = AppealLetter(
+            name=form.name,
+            case_type=form.case_type,
+            incident_date=form.incident_date,
+            location=form.location,
+            description=form.description,
+            evidence=form.evidence,
+            contact_info=form.contact_info,
+            english_letter=english_letter,
+            amharic_letter=amharic_letter,
+            user_id=current_user.id
+        )
+        db.add(db_appeal)
+        db.commit()
         
         return {
-            "appeal_letter": response.text,
+            "appeal_letter": appeal_letter,
             "generated_at": "2024-01-01T00:00:00Z",
             "case_details": form.dict()
         }
@@ -212,53 +198,151 @@ async def generate_appeal(form: AppealForm):
         raise HTTPException(status_code=500, detail=f"Error generating appeal letter: {str(e)}")
 
 @app.get("/api/support-organizations")
-async def get_support_organizations(region: Optional[str] = None):
+async def get_support_organizations(region: Optional[str] = None, db: Session = Depends(get_db)):
     """Get list of support organizations, optionally filtered by region"""
-    organizations_data = load_support_organizations()
+    query = db.query(SupportOrganization).filter(SupportOrganization.is_active == True)
     
     if region:
-        filtered_orgs = [
-            org for org in organizations_data["organizations"] 
-            if org["region"].lower() == region.lower()
-        ]
-        return {"organizations": filtered_orgs}
+        query = query.filter(SupportOrganization.region.ilike(f"%{region}%"))
     
-    return organizations_data
+    organizations = query.all()
+    
+    result = []
+    for org in organizations:
+        result.append({
+            "name": org.name,
+            "region": org.region,
+            "services": json.loads(org.services),
+            "contact": org.contact,
+            "address": org.address,
+            "website": org.website
+        })
+    
+    return {"organizations": result}
 
 @app.get("/api/case-stories")
-async def get_case_stories(category: Optional[str] = None, region: Optional[str] = None):
+async def get_case_stories(category: Optional[str] = None, region: Optional[str] = None, db: Session = Depends(get_db)):
     """Get case stories, optionally filtered by category or region"""
-    stories_data = load_case_stories()
-    
-    filtered_stories = stories_data["stories"]
+    # Normal users only see approved stories, admins see all
+    query = db.query(Story).filter(Story.is_approved == True)
     
     if category:
-        filtered_stories = [
-            story for story in filtered_stories 
-            if story["category"] == category
-        ]
+        query = query.filter(Story.category == category)
     
     if region:
-        filtered_stories = [
-            story for story in filtered_stories 
-            if story["region"] == region
-        ]
+        query = query.filter(Story.region.ilike(f"%{region}%"))
     
-    return {"stories": filtered_stories}
+    stories = query.all()
+    
+    result = []
+    for story in stories:
+        result.append({
+            "id": story.id,
+            "title": story.title,
+            "content": story.content,
+            "category": story.category,
+            "region": story.region,
+            "outcome": "positive",  # Default outcome
+            "is_approved": story.is_approved
+        })
+    
+    return {"stories": result}
 
 @app.post("/api/submit-story")
-async def submit_story(story: StorySubmission):
-    """Submit an anonymous story (in a real app, this would be stored in a database)"""
+async def submit_story(story: StorySubmission, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Submit an anonymous story"""
     try:
-        # In a real application, this would be saved to a database
-        # For demo purposes, we'll just return a success message
+        db_story = Story(
+            title=story.title,
+            content=story.content,
+            category=story.category,
+            region=story.region,
+            is_approved=False,  # Requires moderation
+            user_id=current_user.id
+        )
+        db.add(db_story)
+        db.commit()
+        
         return {
-            "message": "Story submitted successfully",
-            "story_id": "demo_123",
+            "message": "Story submitted successfully and is pending approval",
+            "story_id": db_story.id,
             "submitted_at": "2024-01-01T00:00:00Z"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error submitting story: {str(e)}")
+
+# User-specific endpoints
+@app.get("/api/my/stories")
+async def get_my_stories(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get current user's stories"""
+    stories = db.query(Story).filter(Story.user_id == current_user.id).all()
+    
+    result = []
+    for story in stories:
+        result.append({
+            "id": story.id,
+            "title": story.title,
+            "content": story.content,
+            "category": story.category,
+            "region": story.region,
+            "is_approved": story.is_approved,
+            "created_at": story.created_at.isoformat() if story.created_at else None
+        })
+    
+    return {"stories": result}
+
+@app.get("/api/my/legal-advice")
+async def get_my_legal_advice(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get current user's legal advice history"""
+    requests = db.query(LegalAdviceRequest).filter(LegalAdviceRequest.user_id == current_user.id).order_by(LegalAdviceRequest.created_at.desc()).all()
+    
+    result = []
+    for req in requests:
+        result.append({
+            "id": req.id,
+            "description": req.description,
+            "region": req.region,
+            "advice_generated": req.advice_generated,
+            "case_type": req.case_type,
+            "created_at": req.created_at.isoformat() if req.created_at else None
+        })
+    
+    return {"legal_advice": result}
+
+@app.get("/api/my/appeal-letters")
+async def get_my_appeal_letters(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get current user's appeal letters"""
+    appeals = db.query(AppealLetter).filter(AppealLetter.user_id == current_user.id).order_by(AppealLetter.created_at.desc()).all()
+    
+    result = []
+    for appeal in appeals:
+        result.append({
+            "id": appeal.id,
+            "name": appeal.name,
+            "case_type": appeal.case_type,
+            "location": appeal.location,
+            "english_letter": appeal.english_letter,
+            "amharic_letter": appeal.amharic_letter,
+            "created_at": appeal.created_at.isoformat() if appeal.created_at else None
+        })
+    
+    return {"appeal_letters": result}
+
+@app.post("/api/approve-story/{story_id}")
+async def approve_story(story_id: int, current_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    """Approve a story (admin only)"""
+    story = db.query(Story).filter(Story.id == story_id).first()
+    
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    
+    story.is_approved = True
+    db.commit()
+    
+    return {
+        "message": "Story approved successfully",
+        "story_id": story.id
+    }
 
 @app.get("/api/health")
 async def health_check():

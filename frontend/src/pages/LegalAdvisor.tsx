@@ -1,17 +1,14 @@
 import { useState } from 'react';
-import { Scale, Send, Copy, Download } from 'lucide-react';
+import { MessageSquare, Send, Copy, Download } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 
-interface LegalAdvisorProps {
-    setIsLoading: (loading: boolean) => void;
-}
-
-const LegalAdvisor = ({ setIsLoading }: LegalAdvisorProps) => {
-    const [caseDescription, setCaseDescription] = useState('');
+const LegalAdvisor = () => {
+    const [description, setDescription] = useState('');
     const [region, setRegion] = useState('');
-    const [legalAdvice, setLegalAdvice] = useState('');
-    const [isSubmitted, setIsSubmitted] = useState(false);
+    const [advice, setAdvice] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const regions = [
         'Addis Ababa',
@@ -29,148 +26,165 @@ const LegalAdvisor = ({ setIsLoading }: LegalAdvisorProps) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!caseDescription.trim()) return;
+        setLoading(true);
+        setError('');
+        setAdvice('');
 
-        setIsLoading(true);
         try {
             const response = await axios.post('http://localhost:8000/api/legal-advice', {
-                description: caseDescription,
-                region: region || undefined
+                description,
+                region: region || null
             });
 
-            setLegalAdvice(response.data.advice);
-            setIsSubmitted(true);
-        } catch (error) {
+            setAdvice(response.data.advice);
+        } catch (error: any) {
             console.error('Error getting legal advice:', error);
-            alert('Error getting legal advice. Please try again.');
+            if (error.response?.status === 503) {
+                setError('AI service is currently unavailable. Please check your GEMINI_API_KEY configuration.');
+            } else if (error.response?.status === 500) {
+                setError('Error generating legal advice. Please try again.');
+            } else if (error.code === 'ERR_NETWORK') {
+                setError('Network error. Please check your connection and try again.');
+            } else {
+                setError('Error generating legal advice. Please try again.');
+            }
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
-    const stripMarkdown = (text: string): string => {
-        return text
-            // Remove headers
-            .replace(/^#{1,6}\s+/gm, '')
-            // Remove bold/italic
-            .replace(/\*\*(.*?)\*\*/g, '$1')
-            .replace(/\*(.*?)\*/g, '$1')
-            .replace(/__(.*?)__/g, '$1')
-            .replace(/_(.*?)_/g, '$1')
-            // Remove code blocks
-            .replace(/```[\s\S]*?```/g, '')
-            .replace(/`([^`]+)`/g, '$1')
-            // Remove links
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-            // Remove list markers
-            .replace(/^[\s]*[-*+]\s+/gm, '')
-            .replace(/^[\s]*\d+\.\s+/gm, '')
-            // Remove blockquotes
-            .replace(/^>\s+/gm, '')
-            // Clean up extra whitespace
-            .replace(/\n\s*\n\s*\n/g, '\n\n')
-            .trim();
-    };
-
-    const copyToClipboard = () => {
-        const cleanText = stripMarkdown(legalAdvice);
-        navigator.clipboard.writeText(cleanText);
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
         alert('Legal advice copied to clipboard!');
     };
 
-    const downloadAdvice = () => {
-        const cleanText = stripMarkdown(legalAdvice);
-        const blob = new Blob([cleanText], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
+    const downloadAdvice = (text: string) => {
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = 'legal-advice.txt';
         document.body.appendChild(a);
         a.click();
+        window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
     };
 
     return (
         <div className="py-10">
-            <div className="max-w-7xl mx-auto px-5">
-                <div className="text-center mb-10 py-10">
-                    <Scale className="w-12 h-12 text-primary-500 mb-4 mx-auto" />
+            <div className="max-w-4xl mx-auto px-5">
+                <div className="text-center mb-10">
+                    <MessageSquare className="w-12 h-12 text-primary-500 mb-4 mx-auto" />
                     <h1 className="text-4xl font-bold text-gray-900 mb-3">AI Legal Advisor</h1>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">Get personalized legal guidance based on Ethiopian law and your specific situation</p>
+                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                        Get personalized legal advice based on Ethiopian law and women's rights.
+                        Our AI will analyze your situation and provide actionable guidance.
+                    </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-10">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Input Form */}
                     <div className="card">
-                        <h2 className="text-2xl font-bold mb-6 text-gray-900">Describe Your Situation</h2>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Describe Your Situation</h2>
+
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
-                                <label htmlFor="region" className="block font-medium text-gray-900 mb-2">Region (Optional)</label>
+                                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Case Description *
+                                </label>
+                                <textarea
+                                    id="description"
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    required
+                                    rows={8}
+                                    className="form-textarea w-full"
+                                    placeholder="Describe your legal situation in detail. Include relevant facts, dates, and any specific questions you have..."
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Region (Optional)
+                                </label>
                                 <select
                                     id="region"
                                     value={region}
                                     onChange={(e) => setRegion(e.target.value)}
-                                    className="form-select"
+                                    className="form-select w-full"
                                 >
-                                    <option value="">Select your region</option>
-                                    {regions.map((r) => (
-                                        <option key={r} value={r}>{r}</option>
+                                    <option value="">Select a region</option>
+                                    {regions.map((region) => (
+                                        <option key={region} value={region}>{region}</option>
                                     ))}
                                 </select>
                             </div>
 
-                            <div>
-                                <label htmlFor="case-description" className="block font-medium text-gray-900 mb-2">Case Description</label>
-                                <textarea
-                                    id="case-description"
-                                    value={caseDescription}
-                                    onChange={(e) => setCaseDescription(e.target.value)}
-                                    placeholder="Please describe your situation in detail. Include relevant dates, locations, and any evidence you may have..."
-                                    className="form-textarea"
-                                    rows={8}
-                                    required
-                                />
-                            </div>
-
-                            <button type="submit" className="btn btn-primary">
-                                <Send className="w-5 h-5" />
-                                Get Legal Advice
+                            <button
+                                type="submit"
+                                disabled={loading || !description.trim()}
+                                className="btn btn-primary w-full"
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        Getting Legal Advice...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send className="w-4 h-4 mr-2" />
+                                        Get Legal Advice
+                                    </>
+                                )}
                             </button>
                         </form>
+
+                        {error && (
+                            <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                                {error}
+                            </div>
+                        )}
                     </div>
 
-                    {isSubmitted && legalAdvice && (
-                        <div className="card">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900">Your Legal Advice</h2>
-                                <div className="flex gap-3">
-                                    <button onClick={copyToClipboard} className="btn btn-secondary btn-small">
+                    {/* AI Response */}
+                    <div className="card">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Legal Advice</h2>
+
+                        {advice ? (
+                            <div className="space-y-4">
+                                <div className="bg-white p-4 rounded-lg border border-gray-200 prose prose-sm max-w-none text-gray-900 leading-relaxed min-h-[300px]">
+                                    <ReactMarkdown>
+                                        {advice}
+                                    </ReactMarkdown>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => copyToClipboard(advice)}
+                                        className="btn btn-secondary btn-small"
+                                    >
                                         <Copy className="w-4 h-4" />
                                         Copy
                                     </button>
-                                    <button onClick={downloadAdvice} className="btn btn-secondary btn-small">
+                                    <button
+                                        onClick={() => downloadAdvice(advice)}
+                                        className="btn btn-secondary btn-small"
+                                    >
                                         <Download className="w-4 h-4" />
                                         Download
                                     </button>
                                 </div>
                             </div>
-                            <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 prose prose-sm max-w-none text-gray-900 leading-relaxed">
-                                <ReactMarkdown>
-                                    {legalAdvice}
-                                </ReactMarkdown>
+                        ) : (
+                            <div className="text-center py-12">
+                                <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                <h3 className="text-lg font-medium text-gray-900 mb-2">No advice generated yet</h3>
+                                <p className="text-gray-600">
+                                    Describe your legal situation and click "Get Legal Advice" to receive personalized guidance.
+                                </p>
                             </div>
-                        </div>
-                    )}
-                </div>
-
-                <div className="card border-l-4 border-orange-500">
-                    <h3 className="text-xl font-bold mb-3 text-gray-900">Important Disclaimer</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                        This AI-powered legal advice is for informational purposes only and should not be considered
-                        as formal legal counsel. For specific legal matters, please consult with a qualified lawyer
-                        or legal professional. The advice provided is based on general Ethiopian legal principles
-                        and may not apply to your specific situation.
-                    </p>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

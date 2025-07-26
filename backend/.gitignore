@@ -9,3 +9,12 @@ __pycache__
 .env.production.local
 .env.development
 .env.test
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Alembic
+alembic.ini
+migrations/
