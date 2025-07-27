@@ -84,6 +84,8 @@ Located in the [`backend/`](backend/) directory.
 - Admin routes are protected and require authentication.
 - All content submissions are subject to moderation before publication.
 
+**See [`backend/README_DATABASE.md`](backend/README_DATABASE.md) for full database schema, setup, and admin endpoint details.**
+
 ### Backend Setup & Running
 
 1. **Install dependencies:**
@@ -170,4 +172,8 @@ This project is for demonstration and educational purposes.
 
 ## Contact
 
-For questions, feedback, or contributions, please contact
+For questions, feedback, or contributions, please contact the project maintainers.
+
+---
+
+**For more details on the database, see [`backend/README_DATABASE.md`](backend/README_DATABASE.md). For frontend development tips, see [`frontend/README.md`](frontend/README.md).**
