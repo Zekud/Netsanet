@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BookOpen, Filter, Heart, CheckCircle, Clock } from 'lucide-react';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Story {
     id: number;
@@ -13,6 +14,7 @@ interface Story {
 }
 
 const CaseStories = () => {
+    const { isAdmin } = useAuth();
     const [stories, setStories] = useState<Story[]>([]);
     const [filteredStories, setFilteredStories] = useState<Story[]>([]);
     const [selectedCategory, setSelectedCategory] = useState('');
@@ -201,16 +203,18 @@ const CaseStories = () => {
                     )}
                 </div>
 
-                <div className="card text-center">
-                    <h3 className="text-2xl font-bold mb-4 text-gray-900">Share Your Story</h3>
-                    <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                        Your experience can inspire and help other women. Share your story anonymously
-                        on our Story Wall to support the community.
-                    </p>
-                    <a href="/story-wall" className="btn btn-primary">
-                        Share Your Story
-                    </a>
-                </div>
+                {!isAdmin && (
+                    <div className="card text-center">
+                        <h3 className="text-2xl font-bold mb-4 text-gray-900">Share Your Story</h3>
+                        <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                            Your experience can inspire and help other women. Share your story anonymously
+                            on our Story Wall to support the community.
+                        </p>
+                        <a href="/story-wall" className="btn btn-primary">
+                            Share Your Story
+                        </a>
+                    </div>
+                )}
             </div>
         </div>
     );
