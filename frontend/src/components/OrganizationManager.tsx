@@ -142,17 +142,28 @@ const OrganizationManager = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.name || !formData.region || !formData.contact || !formData.address) {
-            alert('Please fill in all required fields');
+        if (!formData.name || !formData.region || !formData.contact || !formData.address || formData.services.length === 0) {
+            alert('Please fill in all required fields including at least one service');
             return;
         }
 
+        // Format website URL if provided
+        let formattedWebsite = formData.website;
+        if (formattedWebsite && !formattedWebsite.startsWith('http://') && !formattedWebsite.startsWith('https://')) {
+            formattedWebsite = 'https://' + formattedWebsite;
+        }
+
         try {
+            const submitData = {
+                ...formData,
+                website: formattedWebsite
+            };
+            
             if (editingOrg) {
-                await axios.put(`http://localhost:8000/admin/organizations/${editingOrg.id}`, formData);
+                await axios.put(`http://localhost:8000/admin/organizations/${editingOrg.id}`, submitData);
                 alert('Organization updated successfully!');
             } else {
-                await axios.post('http://localhost:8000/admin/organizations', formData);
+                await axios.post('http://localhost:8000/admin/organizations', submitData);
                 alert('Organization created successfully!');
             }
 
@@ -319,7 +330,7 @@ const OrganizationManager = () => {
                                 Website (Optional)
                             </label>
                             <input
-                                type="url"
+                                type="text"
                                 name="website"
                                 value={formData.website}
                                 onChange={handleInputChange}
