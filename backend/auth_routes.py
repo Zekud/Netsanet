@@ -1,12 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User
 from auth import get_password_hash, authenticate_user, create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
 from pydantic import BaseModel
 from datetime import timedelta
-from typing import Optional
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 

@@ -31,8 +31,10 @@ const Navbar = () => {
 
     return (
         <nav className="bg-white shadow-lg fixed w-full top-0 z-50">
+
             <div className="container-responsive">
                 <div className="flex justify-between h-16 lg:h-20">
+
                     {/* Logo and main nav */}
                     <div className="flex items-center">
                         <Link to="/" className="flex items-center space-x-2 sm:space-x-3 group">
@@ -59,9 +61,10 @@ const Navbar = () => {
                                 <Link
                                     key={item.path}
                                     to={item.path}
-                                    className={`nav-link ${isActive(item.path)
+                className={`nav-link ${isActive(item.path)
                                             ? 'nav-link-active'
                                             : 'nav-link-inactive'
+
                                         }`}
                                 >
                                     {item.label}
@@ -86,10 +89,12 @@ const Navbar = () => {
 
                                 {/* User Dropdown Menu */}
                                 {isUserMenuOpen && (
+
                                     <div className="absolute right-0 mt-2 w-56 sm:w-64 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-200">
                                         <div className="px-4 py-3 text-sm text-gray-700 border-b border-gray-100">
                                             <div className="font-semibold text-gray-900">{user?.username}</div>
                                             <div className="text-gray-500 text-xs sm:text-sm">{user?.email}</div>
+
                                             {isAdmin && (
                                                 <div className="flex items-center mt-2">
                                                     <Shield className="w-3 h-3 text-primary-500 mr-2" />
@@ -166,8 +171,10 @@ const Navbar = () => {
 
             {/* Mobile menu overlay */}
             {isMenuOpen && (
+
                 <div className="mobile-menu-overlay" onClick={() => setIsMenuOpen(false)} />
             )}
+
 
             {/* Mobile menu */}
             {isMenuOpen && (

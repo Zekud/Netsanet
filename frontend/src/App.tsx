@@ -46,7 +46,9 @@ const AppContent = () => {
     <Router>
       <div className="min-h-screen bg-gray-50">
         <Navbar />
+
         <main className="pt-16 lg:pt-20">
+
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />

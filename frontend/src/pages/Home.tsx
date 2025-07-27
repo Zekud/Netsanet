@@ -30,7 +30,9 @@ const Home = () => {
 
     return () => clearInterval(interval);
   }, [images.length]);
+
   
+
   const features = [
     {
       icon: Scale,
@@ -76,6 +78,7 @@ const Home = () => {
 
   return (
     <div className="bg-gradient-to-br from-primary-500 to-secondary-500 text-white">
+
       {/* Hero Section */}
       <section className="section-padding relative overflow-hidden">
         <div className="container-responsive relative z-10">
@@ -84,6 +87,7 @@ const Home = () => {
               <h1 className="flex items-center justify-center lg:justify-start gap-3 sm:gap-4 text-responsive-4xl lg:text-responsive-5xl font-bold">
                 <Heart className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 flex-shrink-0" />
                 <span>Netsanet</span>
+
               </h1>
               <p className="text-responsive-xl lg:text-responsive-2xl opacity-90 font-medium">
                 AI-Powered Support for Women in Ethiopia
@@ -109,9 +113,11 @@ const Home = () => {
                 {images.map((image, index) => (
                   <div
                     key={index}
+
                     className={`carousel-image ${
                       index === currentImageIndex ? "opacity-100" : "opacity-0"
                     }`}
+
                   >
                     <img
                       src={image}
@@ -129,11 +135,13 @@ const Home = () => {
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
+
                       className={`carousel-indicator ${
                         index === currentImageIndex
                           ? "carousel-indicator-active"
                           : "carousel-indicator-inactive"
                       }`}
+
                       aria-label={`Go to image ${index + 1}`}
                     />
                   ))}
