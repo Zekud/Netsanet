@@ -18,10 +18,10 @@ const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.Re
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center space-responsive-md">
+          <div className="loading-spinner w-12 h-12 mx-auto"></div>
+          <p className="text-responsive-lg text-gray-600">Loading...</p>
         </div>
       </div>
     );
@@ -46,7 +46,9 @@ const AppContent = () => {
     <Router>
       <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <main className="pt-16">
+
+        <main className="pt-16 lg:pt-20">
+
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
