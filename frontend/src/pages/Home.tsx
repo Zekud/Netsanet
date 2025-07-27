@@ -30,6 +30,7 @@ const Home = () => {
 
     return () => clearInterval(interval);
   }, [images.length]);
+  
   const features = [
     {
       icon: Scale,
@@ -76,71 +77,39 @@ const Home = () => {
   return (
     <div className="bg-gradient-to-br from-primary-500 to-secondary-500 text-white">
       {/* Hero Section */}
-      {/* <section className="py-20">
-                <div className="max-w-7xl mx-auto px-5">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-15 items-center">
-                        <div className="text-center lg:text-left">
-                            <h1 className="flex items-center gap-4 text-5xl font-bold mb-4">
-                                <Heart className="w-12 h-12" />
-                                Netsanet
-                            </h1>
-                            <p className="text-2xl mb-5 opacity-90">
-                                AI-Powered Support for Women in Ethiopia
-                            </p>
-                            <p className="text-lg mb-8 opacity-80 leading-relaxed">
-                                Get legal guidance, generate formal appeals, and connect with support organizations.
-                                You're not alone in your journey toward justice and empowerment.
-                            </p>
-                            <div className="flex gap-4 justify-center lg:justify-start">
-                                <Link to="/legal-advisor" className="btn btn-primary">
-                                    Get Legal Advice
-                                </Link>
-                                <Link to="/support-directory" className="btn btn-secondary">
-                                    Find Support
-                                </Link>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-center">
-                            <div className="w-80 h-80 bg-white/10 rounded-2xl backdrop-blur-lg flex items-center justify-center">
-                                <Shield className="w-32 h-32 text-white opacity-80" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section> */}
-
-      <section className="py-20 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-5 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-15 items-center">
-            <div className="text-center lg:text-left">
-              <h1 className="flex items-center gap-4 text-5xl font-bold mb-4">
-                <Heart className="w-12 h-12" />
-                Netsanet
+      <section className="section-padding relative overflow-hidden">
+        <div className="container-responsive relative z-10">
+          <div className="grid-responsive-2 items-center gap-8 lg:gap-12">
+            <div className="text-center lg:text-left space-responsive-md">
+              <h1 className="flex items-center justify-center lg:justify-start gap-3 sm:gap-4 text-responsive-4xl lg:text-responsive-5xl font-bold">
+                <Heart className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 flex-shrink-0" />
+                <span>Netsanet</span>
               </h1>
-              <p className="text-2xl mb-5 opacity-90">
+              <p className="text-responsive-xl lg:text-responsive-2xl opacity-90 font-medium">
                 AI-Powered Support for Women in Ethiopia
               </p>
-              <p className="text-lg mb-8 opacity-80 leading-relaxed">
+              <p className="text-responsive-lg lg:text-responsive-xl opacity-80 leading-relaxed max-w-2xl mx-auto lg:mx-0">
                 Get legal guidance, generate formal appeals, and connect with
                 support organizations. You're not alone in your journey toward
                 justice and empowerment.
               </p>
-              <div className="flex gap-4 justify-center lg:justify-start">
-                <Link to="/legal-advisor" className="btn btn-primary">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <Link to="/legal-advisor" className="btn btn-primary btn-large">
                   Get Legal Advice
                 </Link>
-                <Link to="/support-directory" className="btn btn-secondary">
+                <Link to="/support-directory" className="btn btn-secondary btn-large">
                   Find Support
                 </Link>
               </div>
             </div>
+            
             <div className="flex items-center justify-center lg:justify-end">
-              <div className="relative w-full max-w-md lg:max-w-lg xl:max-w-xl h-64 sm:h-80 lg:h-96 xl:h-[28rem] rounded-2xl overflow-hidden shadow-2xl">
+              <div className="carousel-container">
                 {/* Carousel Images */}
                 {images.map((image, index) => (
                   <div
                     key={index}
-                    className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                    className={`carousel-image ${
                       index === currentImageIndex ? "opacity-100" : "opacity-0"
                     }`}
                   >
@@ -155,15 +124,15 @@ const Home = () => {
                 ))}
 
                 {/* Carousel Indicators */}
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-3">
+                <div className="carousel-indicators">
                   {images.map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      className={`carousel-indicator ${
                         index === currentImageIndex
-                          ? "bg-white shadow-lg scale-110"
-                          : "bg-white/60 hover:bg-white/80"
+                          ? "carousel-indicator-active"
+                          : "carousel-indicator-inactive"
                       }`}
                       aria-label={`Go to image ${index + 1}`}
                     />
@@ -176,29 +145,35 @@ const Home = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-5">
-          <h2 className="text-center text-4xl font-bold mb-15 text-gray-900">
-            How We Can Help You
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <section className="section-padding bg-white">
+        <div className="container-responsive">
+          <div className="text-center mb-12 lg:mb-16">
+            <h2 className="section-title text-gray-900">
+              How We Can Help You
+            </h2>
+            <p className="text-responsive-lg text-gray-600 max-w-3xl mx-auto">
+              Comprehensive support services designed to empower women and provide access to justice
+            </p>
+          </div>
+          
+          <div className="grid-responsive-3">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
                 <Link
                   key={index}
                   to={feature.path}
-                  className="card hover:-translate-y-1 hover:shadow-lg transition-all duration-300"
+                  className="card hover:-translate-y-2 hover:shadow-xl transition-all duration-300 group"
                 >
                   <div
-                    className={`w-15 h-15 rounded-full flex items-center justify-center mb-5 ${feature.color}`}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-full flex items-center justify-center mb-4 sm:mb-6 ${feature.color} group-hover:scale-110 transition-transform duration-300`}
                   >
-                    <Icon className="w-8 h-8 text-white" />
+                    <Icon className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3 text-gray-900">
+                  <h3 className="text-responsive-xl font-semibold mb-3 text-gray-900 group-hover:text-primary-600 transition-colors duration-300">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 leading-relaxed">
+                  <p className="text-gray-600 leading-relaxed text-responsive-base">
                     {feature.description}
                   </p>
                 </Link>
@@ -209,56 +184,74 @@ const Home = () => {
       </section>
 
       {/* About Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-5">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-15">
-            <div className="lg:col-span-2">
-              <h2 className="text-4xl font-bold mb-6 text-gray-900">
+      <section className="section-padding bg-gray-50">
+        <div className="container-responsive">
+          <div className="grid-responsive-2 gap-8 lg:gap-12 items-start">
+            <div className="space-responsive-md">
+              <h2 className="text-responsive-3xl lg:text-responsive-4xl font-bold text-gray-900">
                 About Netsanet
               </h2>
-              <p className="text-gray-600 mb-5 leading-relaxed">
+              <p className="text-gray-600 leading-relaxed text-responsive-lg">
                 Netsanet is dedicated to supporting women in Ethiopia who
                 experience abuse and discrimination. Our AI-powered platform
                 provides:
               </p>
-              <ul className="mb-5 space-y-2">
-                <li className="text-gray-600">
-                  • Legal guidance based on Ethiopian Constitution and laws
+              <ul className="space-responsive-sm">
+                <li className="flex items-start gap-3 text-gray-600 text-responsive-base">
+                  <span className="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></span>
+                  <span>Legal guidance based on Ethiopian Constitution and laws</span>
                 </li>
-                <li className="text-gray-600">
-                  • Formal appeal letter generation in multiple languages
+                <li className="flex items-start gap-3 text-gray-600 text-responsive-base">
+                  <span className="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></span>
+                  <span>Formal appeal letter generation in multiple languages</span>
                 </li>
-                <li className="text-gray-600">
-                  • Directory of local support organizations
+                <li className="flex items-start gap-3 text-gray-600 text-responsive-base">
+                  <span className="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></span>
+                  <span>Directory of local support organizations</span>
                 </li>
-                <li className="text-gray-600">
-                  • Community of shared experiences and support
+                <li className="flex items-start gap-3 text-gray-600 text-responsive-base">
+                  <span className="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></span>
+                  <span>Community of shared experiences and support</span>
                 </li>
               </ul>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-gray-600 leading-relaxed text-responsive-lg">
                 We believe every woman deserves access to justice and support.
                 Your rights matter, and we're here to help you navigate the
                 legal system.
               </p>
             </div>
-            <div className="space-y-8">
+            
+            <div className="space-responsive-md">
               <div className="card">
-                <Globe className="w-10 h-10 text-primary-500 mb-4" />
-                <h3 className="text-lg font-semibold mb-2 text-gray-900">
-                  Ethiopia-wide
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  Support available across all regions
-                </p>
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-responsive-lg font-semibold mb-2 text-gray-900">
+                      Ethiopia-wide
+                    </h3>
+                    <p className="text-gray-600 text-responsive-sm">
+                      Support available across all regions with local expertise and resources
+                    </p>
+                  </div>
+                </div>
               </div>
+              
               <div className="card">
-                <Shield className="w-10 h-10 text-primary-500 mb-4" />
-                <h3 className="text-lg font-semibold mb-2 text-gray-900">
-                  Confidential
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  Your privacy and safety are our priority
-                </p>
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-responsive-lg font-semibold mb-2 text-gray-900">
+                      Confidential & Secure
+                    </h3>
+                    <p className="text-gray-600 text-responsive-sm">
+                      Your privacy and safety are our priority with secure, anonymous access
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -266,15 +259,24 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-primary-500 text-center">
-        <div className="max-w-7xl mx-auto px-5">
-          <h2 className="text-4xl font-bold mb-4">Ready to Get Started?</h2>
-          <p className="text-xl mb-8 opacity-90">
-            Take the first step toward justice and empowerment
-          </p>
-          <Link to="/legal-advisor" className="btn btn-primary btn-large">
-            Start Your Journey
-          </Link>
+      <section className="section-padding bg-primary-500 text-center">
+        <div className="container-responsive">
+          <div className="max-w-4xl mx-auto space-responsive-md">
+            <h2 className="text-responsive-3xl lg:text-responsive-4xl font-bold">
+              Ready to Get Started?
+            </h2>
+            <p className="text-responsive-xl opacity-90 max-w-2xl mx-auto">
+              Take the first step toward justice and empowerment. Our platform is here to support you every step of the way.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/legal-advisor" className="btn btn-primary btn-large">
+                Start Your Journey
+              </Link>
+              <Link to="/support-directory" className="btn btn-secondary btn-large">
+                Find Local Support
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </div>

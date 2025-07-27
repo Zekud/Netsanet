@@ -99,31 +99,42 @@ const CaseStories = () => {
 
     if (loading) {
         return (
-            <div className="case-stories">
-                <div className="container">
-                    <div className="loading">Loading inspiring stories...</div>
+            <div className="section-padding">
+                <div className="container-responsive">
+                    <div className="flex items-center justify-center py-12">
+                        <div className="text-center space-responsive-md">
+                            <div className="loading-spinner w-12 h-12 mx-auto"></div>
+                            <p className="text-responsive-lg text-gray-600">Loading inspiring stories...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="py-10">
-            <div className="max-w-7xl mx-auto px-5">
-                <div className="text-center mb-10 py-10">
-                    <BookOpen className="w-12 h-12 text-primary-500 mb-4 mx-auto" />
-                    <h1 className="text-4xl font-bold text-gray-900 mb-3">Case Stories</h1>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">Read inspiring stories from other women who have overcome similar challenges</p>
+        <div className="section-padding">
+            <div className="container-responsive">
+                {/* Page Header */}
+                <div className="page-header">
+                    <BookOpen className="page-icon mx-auto" />
+                    <h1 className="text-responsive-3xl lg:text-responsive-4xl font-bold text-gray-900 mb-4">
+                        Case Stories
+                    </h1>
+                    <p className="text-responsive-lg text-gray-600 max-w-3xl mx-auto">
+                        Read inspiring stories from other women who have overcome similar challenges and find strength in shared experiences
+                    </p>
                 </div>
 
-                <div className="mb-10">
-                    <div className="card flex justify-between items-center mb-8">
-                        <div className="flex items-center gap-4">
-                            <Filter className="w-5 h-5 text-gray-600" />
+                {/* Filter Bar */}
+                <div className="filter-bar mb-8 lg:mb-12">
+                    <div className="filter-group">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
                             <select
                                 value={selectedCategory}
                                 onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg bg-white"
+                                className="form-select text-responsive-sm"
                             >
                                 {categories.map((category) => (
                                     <option key={category} value={category}>
@@ -134,83 +145,100 @@ const CaseStories = () => {
                             <select
                                 value={selectedRegion}
                                 onChange={(e) => setSelectedRegion(e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg bg-white"
+                                className="form-select text-responsive-sm"
                             >
                                 {regions.map((region) => (
                                     <option key={region} value={region}>{region}</option>
                                 ))}
                             </select>
                         </div>
-                        <p className="text-gray-600 font-medium">
-                            {filteredStories.length} story{filteredStories.length !== 1 ? 'ies' : 'y'} found
-                        </p>
                     </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {filteredStories.map((story) => (
-                            <div key={story.id} className={`card ${story.is_approved === false ? 'border-l-4 border-yellow-500' : ''}`}>
-                                <div className="mb-5">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <h3 className="text-xl font-semibold text-gray-900">{story.title}</h3>
-                                        {story.is_approved === false && (
-                                            <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                                                <Clock className="w-3 h-3" />
-                                                Pending
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">
-                                            {categoryLabels[story.category as keyof typeof categoryLabels]}
-                                        </span>
-                                        <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">
-                                            {story.region}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="mb-5">
-                                    <p className="text-gray-600 leading-relaxed">{story.content}</p>
-                                </div>
-
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-2 text-green-600">
-                                        <Heart className="w-4 h-4" />
-                                        <span className="font-medium">
-                                            {story.outcome === 'positive' ? 'Positive Outcome' : 'Case Resolved'}
-                                        </span>
-                                    </div>
-
-                                    {story.is_approved === false && (
-                                        <button
-                                            onClick={() => approveStory(story.id)}
-                                            className="btn btn-primary btn-small"
-                                        >
-                                            <CheckCircle className="w-4 h-4" />
-                                            Approve
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {filteredStories.length === 0 && (
-                        <div className="text-center py-10">
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">No stories found</h3>
-                            <p className="text-gray-600">Try selecting different filters or check back later for new stories.</p>
-                        </div>
-                    )}
+                    <p className="text-responsive-sm text-gray-600 font-medium">
+                        {filteredStories.length} story{filteredStories.length !== 1 ? 'ies' : 'y'} found
+                    </p>
                 </div>
 
+                {/* Stories Grid */}
+                <div className="grid-responsive-2 gap-6 lg:gap-8">
+                    {filteredStories.map((story) => (
+                        <div key={story.id} className={`story-card ${story.is_approved === false ? 'story-card-pending' : ''}`}>
+                            <div className="space-responsive-sm">
+                                <div className="flex justify-between items-start gap-4">
+                                    <h3 className="text-responsive-xl font-semibold text-gray-900 leading-tight">
+                                        {story.title}
+                                    </h3>
+                                    {story.is_approved === false && (
+                                        <span className="status-badge status-pending flex items-center gap-1 flex-shrink-0">
+                                            <Clock className="w-3 h-3" />
+                                            <span className="hidden sm:inline">Pending</span>
+                                        </span>
+                                    )}
+                                </div>
+                                
+                                <div className="flex flex-wrap gap-2">
+                                    <span className="service-tag service-tag-secondary">
+                                        {categoryLabels[story.category as keyof typeof categoryLabels]}
+                                    </span>
+                                    <span className="service-tag service-tag-secondary">
+                                        {story.region}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="my-4 sm:my-6">
+                                <p className="text-gray-600 leading-relaxed text-responsive-base">
+                                    {story.content}
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div className="flex items-center gap-2 text-green-600">
+                                    <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span className="font-medium text-responsive-sm">
+                                        {story.outcome === 'positive' ? 'Positive Outcome' : 'Case Resolved'}
+                                    </span>
+                                </div>
+
+                                {story.is_approved === false && (
+                                    <button
+                                        onClick={() => approveStory(story.id)}
+                                        className="btn btn-primary btn-small"
+                                    >
+                                        <CheckCircle className="w-4 h-4" />
+                                        <span className="hidden sm:inline">Approve</span>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Empty State */}
+                {filteredStories.length === 0 && (
+                    <div className="text-center py-12 lg:py-16">
+                        <div className="max-w-md mx-auto space-responsive-md">
+                            <BookOpen className="w-16 h-16 text-gray-300 mx-auto" />
+                            <h3 className="text-responsive-xl font-semibold text-gray-900">
+                                No stories found
+                            </h3>
+                            <p className="text-gray-600 text-responsive-base">
+                                Try selecting different filters or check back later for new stories.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Share Your Story Section - Only for non-admin users */}
                 {!isAdmin && (
-                    <div className="card text-center">
-                        <h3 className="text-2xl font-bold mb-4 text-gray-900">Share Your Story</h3>
-                        <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                    <div className="card-large text-center mt-12 lg:mt-16">
+                        <h3 className="text-responsive-2xl lg:text-responsive-3xl font-bold mb-4 text-gray-900">
+                            Share Your Story
+                        </h3>
+                        <p className="text-gray-600 mb-6 max-w-2xl mx-auto text-responsive-lg">
                             Your experience can inspire and help other women. Share your story anonymously
                             on our Story Wall to support the community.
                         </p>
-                        <a href="/story-wall" className="btn btn-primary">
+                        <a href="/story-wall" className="btn btn-primary btn-large">
                             Share Your Story
                         </a>
                     </div>
