@@ -7,9 +7,10 @@ Netsanet (meaning "solidarity" in Amharic) is a comprehensive platform dedicated
 ## Table of Contents
 
 - [Features](#features)
-- [Architecture Overview](#architecture-overview)
+- [System Architecture](#system-architecture)
 - [Backend](#backend)
   - [API Endpoints](#api-endpoints)
+  - [Database & Admin](#database--admin)
   - [Setup & Running](#backend-setup--running)
 - [Frontend](#frontend)
   - [Key Pages](#key-pages)
@@ -17,6 +18,7 @@ Netsanet (meaning "solidarity" in Amharic) is a comprehensive platform dedicated
 - [Technology Stack](#technology-stack)
 - [Community Guidelines & Disclaimer](#community-guidelines--disclaimer)
 - [License](#license)
+- [Contact](#contact)
 
 ---
 
@@ -27,14 +29,16 @@ Netsanet (meaning "solidarity" in Amharic) is a comprehensive platform dedicated
 - **Support Directory:** Directory of local legal aid organizations and support services.
 - **Case Stories:** Real stories from women who have overcome legal and social challenges.
 - **Story Wall:** Anonymous sharing of experiences to inspire and support others.
+- **Admin Dashboard:** Manage users, stories, organizations, and moderate content.
+- **Database Integration:** Persistent storage for users, stories, organizations, and more.
 - **Modern UI:** Responsive, accessible, and user-friendly interface.
 
 ---
 
-## Architecture Overview
+## System Architecture
 
 - **Frontend:** React + TypeScript (Vite), Tailwind CSS for styling.
-- **Backend:** FastAPI (Python), Gemini AI integration for content generation.
+- **Backend:** FastAPI (Python), Gemini AI integration for content generation, SQL database for persistent storage, and admin tools.
 - **Communication:** RESTful API between frontend and backend.
 
 ---
@@ -63,23 +67,46 @@ Located in the [`backend/`](backend/) directory.
 - `GET /api/health`  
   Health check endpoint.
 
+- **(Admin Only)**  
+  - `GET /api/admin/users`  
+    List and manage platform users.
+  - `GET /api/admin/stories`  
+    Moderate and manage submitted stories.
+  - `POST /api/admin/organizations`  
+    Add or update support organizations.
+  - `DELETE /api/admin/story/{id}`  
+    Remove inappropriate or duplicate stories.
+
+### Database & Admin
+
+- Uses a SQL database (e.g., SQLite, PostgreSQL) for persistent storage of users, stories, organizations, and admin data.
+- Alembic is used for database migrations.
+- Admin routes are protected and require authentication.
+- All content submissions are subject to moderation before publication.
+
 ### Backend Setup & Running
 
 1. **Install dependencies:**
    ```sh
    cd backend
-   python3 -m venv myenv
-   source myenv/bin/activate
+   python3 -m venv venv
+   source venv/bin/activate
    pip install -r requirements.txt
    ```
 
 2. **Set environment variables:**  
-   Create a `.env` file with your Gemini API key:
+   Create a `.env` file with your Gemini API key and database URL:
    ```
    GEMINI_API_KEY=your_api_key_here
+   DATABASE_URL=sqlite:///./netsanet.db
    ```
 
-3. **Run the server:**
+3. **Run database migrations:**
+   ```sh
+   alembic upgrade head
+   ```
+
+4. **Run the server:**
    ```sh
    uvicorn main:app --reload
    ```
@@ -99,6 +126,7 @@ Located in the [`frontend/`](frontend/) directory.
 - **Support Directory:** Find organizations for legal and social support.
 - **Case Stories:** Read real stories from other women.
 - **Story Wall:** Share your experience anonymously and support others.
+- **Admin Dashboard:** For authorized users to manage content and users.
 
 ### Frontend Setup & Running
 
@@ -119,7 +147,7 @@ Located in the [`frontend/`](frontend/) directory.
 ## Technology Stack
 
 - **Frontend:** React, TypeScript, Vite, Tailwind CSS
-- **Backend:** FastAPI, Python, Gemini AI API
+- **Backend:** FastAPI, Python, Gemini AI API, SQLAlchemy, Alembic
 - **Other:** Axios, React Router, Lucide Icons
 
 ---
@@ -130,6 +158,7 @@ Located in the [`frontend/`](frontend/) directory.
 - Avoid sharing identifying information about others.
 - All stories are moderated before being posted.
 - The AI legal advice is for informational purposes only and does not constitute formal legal counsel. For specific legal matters, consult a qualified lawyer.
+- Admins reserve the right to remove inappropriate content and manage platform access.
 
 ---
 
@@ -139,4 +168,6 @@ This project is for demonstration and educational purposes.
 
 ---
 
-For questions or contributions, please contact
+## Contact
+
+For questions, feedback, or contributions, please contact
