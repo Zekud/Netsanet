@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { UserPlus, Eye, EyeOff, Heart, Shield, Users, ArrowRight, CheckCircle } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, Heart, ArrowRight, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Register = () => {
@@ -50,7 +50,7 @@ const Register = () => {
                     <div className="absolute bottom-20 left-20 w-40 h-40 bg-white/10 rounded-full blur-xl animate-pulse delay-1000"></div>
                     <div className="absolute top-1/2 right-1/3 w-24 h-24 bg-white/10 rounded-full blur-xl animate-pulse delay-500"></div>
                 </div>
-                
+
                 {/* Content */}
                 <div className="relative z-10 flex flex-col justify-center px-12 lg:px-16 xl:px-20 text-white">
                     <div className="max-w-md">
@@ -60,16 +60,16 @@ const Register = () => {
                             </div>
                             <h1 className="text-3xl font-bold">Netsanet</h1>
                         </div>
-                        
+
                         <h2 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
                             Join Our
                             <span className="block text-yellow-300">Empowered Community</span>
                         </h2>
-                        
+
                         <p className="text-lg lg:text-xl text-white/90 mb-8 leading-relaxed">
                             Start your journey toward justice and empowerment. Connect with a supportive community, access legal resources, and share your experiences safely.
                         </p>
-                        
+
                         {/* Benefits List */}
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
@@ -254,8 +254,8 @@ const Register = () => {
                         <div className="text-center mt-8 pt-6 border-t border-gray-100">
                             <p className="text-gray-600 text-sm">
                                 Already have an account?{' '}
-                                <Link 
-                                    to="/login" 
+                                <Link
+                                    to="/login"
                                     className="text-primary-600 hover:text-primary-700 font-semibold transition-colors duration-200 hover:underline"
                                 >
                                     Sign in here
