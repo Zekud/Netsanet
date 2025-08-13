@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import axios from 'axios';
+import api from '../lib/api';
 
 interface User {
     id: number;
@@ -40,12 +40,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [loading, setLoading] = useState(true);
 
-    // Set up axios interceptor for authentication
+    // Set up auth header on shared api client
     useEffect(() => {
         if (token) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         } else {
-            delete axios.defaults.headers.common['Authorization'];
+            delete api.defaults.headers.common['Authorization'];
         }
     }, [token]);
 
@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const checkAuth = async () => {
             if (token) {
                 try {
-                    const response = await axios.get('http://localhost:8000/auth/me');
+                    const response = await api.get('/auth/me');
                     setUser(response.data);
                 } catch (error) {
                     console.error('Auth check failed:', error);
@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const login = async (username: string, password: string): Promise<boolean> => {
         try {
-            const response = await axios.post('http://localhost:8000/auth/login', {
+            const response = await api.post('/auth/login', {
                 username,
                 password
             });
@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const register = async (username: string, email: string, password: string): Promise<boolean> => {
         try {
-            const response = await axios.post('http://localhost:8000/auth/register', {
+            const response = await api.post('/auth/register', {
                 username,
                 email,
                 password
@@ -112,7 +112,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(null);
         setToken(null);
         localStorage.removeItem('token');
-        delete axios.defaults.headers.common['Authorization'];
+        delete api.defaults.headers.common['Authorization'];
     };
 
     const value: AuthContextType = {
