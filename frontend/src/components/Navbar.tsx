@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Heart, Menu, X, User, LogOut, Settings, Shield } from 'lucide-react';
+import { Heart, Menu, X, User, LogOut, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
@@ -61,9 +61,9 @@ const Navbar = () => {
                                 <Link
                                     key={item.path}
                                     to={item.path}
-                className={`nav-link ${isActive(item.path)
-                                            ? 'nav-link-active'
-                                            : 'nav-link-inactive'
+                                    className={`nav-link ${isActive(item.path)
+                                        ? 'nav-link-active'
+                                        : 'nav-link-inactive'
 
                                         }`}
                                 >
@@ -211,8 +211,8 @@ const Navbar = () => {
                                         key={item.path}
                                         to={item.path}
                                         className={`block px-3 py-3 rounded-lg text-base font-medium transition-colors duration-200 ${isActive(item.path)
-                                                ? 'bg-primary-50 text-primary-700 border-l-4 border-primary-500'
-                                                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                                            ? 'bg-primary-50 text-primary-700 border-l-4 border-primary-500'
+                                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                             }`}
                                         onClick={() => setIsMenuOpen(false)}
                                     >
@@ -272,7 +272,7 @@ const Navbar = () => {
                                             My Dashboard
                                         </Link>
                                     )}
-                                    
+
                                     {isAdmin && (
                                         <Link
                                             to="/admin"

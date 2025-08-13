@@ -4,12 +4,9 @@ import {
     Users,
     FileText,
     Building,
-    TrendingUp,
     CheckCircle,
     Clock,
-    Trash2,
-    Plus,
-    Edit
+    Trash2
 } from 'lucide-react';
 import OrganizationManager from './OrganizationManager';
 
