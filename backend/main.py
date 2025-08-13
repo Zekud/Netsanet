@@ -1,30 +1,25 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 import json
 import re
-from sqlalchemy.orm import Session
-from database import get_db, engine
-from models import Base, Story, LegalAdviceRequest, AppealLetter, SupportOrganization, User
+from database import get_supabase
 from admin import router as admin_router
 from auth_routes import router as auth_router
 from auth import get_current_user, get_current_admin_user
-from init_db import init_db
 
 # Load environment variables
 load_dotenv()
-init_db()
 
 # Configure Gemini API
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+supabase = get_supabase()
 
 app = FastAPI(title="Netsanet API", description="AI-Powered Support for Women in Ethiopia")
 
@@ -74,7 +69,7 @@ async def root():
     return {"message": "Netsanet API - Supporting Women in Ethiopia"}
 
 @app.post("/api/legal-advice")
-async def get_legal_advice(case: CaseDescription, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_legal_advice(case: CaseDescription, current_user: Dict[str, Any] = Depends(get_current_user)):
     """Get AI-powered legal advice based on case description"""
     if not model:
         raise HTTPException(
@@ -113,16 +108,14 @@ async def get_legal_advice(case: CaseDescription, current_user: User = Depends(g
         response = model.generate_content(prompt)
         advice = response.text
         
-        # Store the request in database with user_id
-        db_request = LegalAdviceRequest(
-            description=case.description,
-            region=case.region,
-            advice_generated=advice,
-            case_type="classified_by_ai",
-            user_id=current_user.id
-        )
-        db.add(db_request)
-        db.commit()
+        # Store the request in Supabase with user_id
+        supabase.table("legal_advice_requests").insert({
+            "description": case.description,
+            "region": case.region,
+            "advice_generated": advice,
+            "case_type": "classified_by_ai",
+            "user_id": current_user["id"],
+        }).execute()
         
         return {
             "advice": advice,
@@ -133,7 +126,7 @@ async def get_legal_advice(case: CaseDescription, current_user: User = Depends(g
         raise HTTPException(status_code=500, detail=f"Error generating legal advice: {str(e)}")
 
 @app.post("/api/generate-appeal")
-async def generate_appeal(form: AppealForm, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def generate_appeal(form: AppealForm, current_user: Dict[str, Any] = Depends(get_current_user)):
     """Generate a formal appeal letter using AI"""
     if not model:
         raise HTTPException(
@@ -180,21 +173,19 @@ async def generate_appeal(form: AppealForm, current_user: User = Depends(get_cur
         english_letter = english_match.group(1).strip() if english_match else appeal_letter
         amharic_letter = amharic_match.group(1).strip() if amharic_match else ""
         
-        # Store the appeal letter in database with user_id
-        db_appeal = AppealLetter(
-            name=form.name,
-            case_type=form.case_type,
-            incident_date=form.incident_date,
-            location=form.location,
-            description=form.description,
-            evidence=form.evidence,
-            contact_info=form.contact_info,
-            english_letter=english_letter,
-            amharic_letter=amharic_letter,
-            user_id=current_user.id
-        )
-        db.add(db_appeal)
-        db.commit()
+        # Store the appeal letter in Supabase with user_id
+        supabase.table("appeal_letters").insert({
+            "name": form.name,
+            "case_type": form.case_type,
+            "incident_date": form.incident_date,
+            "location": form.location,
+            "description": form.description,
+            "evidence": form.evidence,
+            "contact_info": form.contact_info,
+            "english_letter": english_letter,
+            "amharic_letter": amharic_letter,
+            "user_id": current_user["id"],
+        }).execute()
         
         return {
             "appeal_letter": appeal_letter,
@@ -205,74 +196,67 @@ async def generate_appeal(form: AppealForm, current_user: User = Depends(get_cur
         raise HTTPException(status_code=500, detail=f"Error generating appeal letter: {str(e)}")
 
 @app.get("/api/support-organizations")
-async def get_support_organizations(region: Optional[str] = None, db: Session = Depends(get_db)):
+async def get_support_organizations(region: Optional[str] = None):
     """Get list of support organizations, optionally filtered by region"""
-    query = db.query(SupportOrganization).filter(SupportOrganization.is_active == True)
-    
+    query = supabase.table("support_organizations").select("*").eq("is_active", True)
     if region:
-        query = query.filter(SupportOrganization.region.ilike(f"%{region}%"))
-    
-    organizations = query.all()
+        query = query.ilike("region", f"%{region}%")
+    organizations = (query.execute().data) or []
     
     result = []
     for org in organizations:
         result.append({
-            "name": org.name,
-            "region": org.region,
-            "services": json.loads(org.services),
-            "contact": org.contact,
-            "address": org.address,
-            "website": org.website
+            "name": org["name"],
+            "region": org["region"],
+            "services": org.get("services") or [],
+            "contact": org["contact"],
+            "address": org["address"],
+            "website": org.get("website"),
         })
     
     return {"organizations": result}
 
 @app.get("/api/case-stories")
-async def get_case_stories(category: Optional[str] = None, region: Optional[str] = None, db: Session = Depends(get_db)):
+async def get_case_stories(category: Optional[str] = None, region: Optional[str] = None):
     """Get case stories, optionally filtered by category or region"""
-    # Normal users only see approved stories, admins see all
-    query = db.query(Story).filter(Story.is_approved == True)
-    
+    query = supabase.table("stories").select("*").eq("is_approved", True)
     if category:
-        query = query.filter(Story.category == category)
-    
+        query = query.eq("category", category)
     if region:
-        query = query.filter(Story.region.ilike(f"%{region}%"))
-    
-    stories = query.all()
+        query = query.ilike("region", f"%{region}%")
+    stories = (query.execute().data) or []
     
     result = []
     for story in stories:
         result.append({
-            "id": story.id,
-            "title": story.title,
-            "content": story.content,
-            "category": story.category,
-            "region": story.region,
-            "outcome": "positive",  # Default outcome
-            "is_approved": story.is_approved
+            "id": story["id"],
+            "title": story["title"],
+            "content": story["content"],
+            "category": story["category"],
+            "region": story.get("region"),
+            "outcome": "positive",
+            "is_approved": story.get("is_approved", False)
         })
     
     return {"stories": result}
 
 @app.post("/api/submit-story")
-async def submit_story(story: StorySubmission, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def submit_story(story: StorySubmission, current_user: Dict[str, Any] = Depends(get_current_user)):
     """Submit an anonymous story"""
     try:
-        db_story = Story(
-            title=story.title,
-            content=story.content,
-            category=story.category,
-            region=story.region,
-            is_approved=False,  # Requires moderation
-            user_id=current_user.id
-        )
-        db.add(db_story)
-        db.commit()
+        inserted = supabase.table("stories").insert({
+            "title": story.title,
+            "content": story.content,
+            "category": story.category,
+            "region": story.region,
+            "is_approved": False,
+            "user_id": current_user["id"],
+        }, returning="representation").execute()
+        db_story_id = inserted.data[0]["id"] if inserted.data else None
         
         return {
             "message": "Story submitted successfully and is pending approval",
-            "story_id": db_story.id,
+            "story_id": db_story_id,
             "submitted_at": "2024-01-01T00:00:00Z"
         }
     except Exception as e:
@@ -280,71 +264,68 @@ async def submit_story(story: StorySubmission, current_user: User = Depends(get_
 
 # User-specific endpoints
 @app.get("/api/my/stories")
-async def get_my_stories(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_my_stories(current_user: Dict[str, Any] = Depends(get_current_user)):
     """Get current user's stories"""
-    stories = db.query(Story).filter(Story.user_id == current_user.id).all()
+    stories = (supabase.table("stories").select("*").eq("user_id", current_user["id"]).execute().data) or []
     
     result = []
     for story in stories:
         result.append({
-            "id": story.id,
-            "title": story.title,
-            "content": story.content,
-            "category": story.category,
-            "region": story.region,
-            "is_approved": story.is_approved,
-            "created_at": story.created_at.isoformat() if story.created_at else None
+            "id": story["id"],
+            "title": story["title"],
+            "content": story["content"],
+            "category": story["category"],
+            "region": story.get("region"),
+            "is_approved": story.get("is_approved", False),
+            "created_at": story.get("created_at")
         })
     
     return {"stories": result}
 
 @app.get("/api/my/legal-advice")
-async def get_my_legal_advice(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_my_legal_advice(current_user: Dict[str, Any] = Depends(get_current_user)):
     """Get current user's legal advice history"""
-    requests = db.query(LegalAdviceRequest).filter(LegalAdviceRequest.user_id == current_user.id).order_by(LegalAdviceRequest.created_at.desc()).all()
+    requests = (supabase.table("legal_advice_requests").select("*").eq("user_id", current_user["id"]).order("created_at", desc=True).execute().data) or []
     
     result = []
     for req in requests:
         result.append({
-            "id": req.id,
-            "description": req.description,
-            "region": req.region,
-            "advice_generated": req.advice_generated,
-            "case_type": req.case_type,
-            "created_at": req.created_at.isoformat() if req.created_at else None
+            "id": req["id"],
+            "description": req["description"],
+            "region": req.get("region"),
+            "advice_generated": req.get("advice_generated"),
+            "case_type": req.get("case_type"),
+            "created_at": req.get("created_at")
         })
     
     return {"legal_advice": result}
 
 @app.get("/api/my/appeal-letters")
-async def get_my_appeal_letters(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_my_appeal_letters(current_user: Dict[str, Any] = Depends(get_current_user)):
     """Get current user's appeal letters"""
-    appeals = db.query(AppealLetter).filter(AppealLetter.user_id == current_user.id).order_by(AppealLetter.created_at.desc()).all()
+    appeals = (supabase.table("appeal_letters").select("*").eq("user_id", current_user["id"]).order("created_at", desc=True).execute().data) or []
     
     result = []
     for appeal in appeals:
         result.append({
-            "id": appeal.id,
-            "name": appeal.name,
-            "case_type": appeal.case_type,
-            "location": appeal.location,
-            "english_letter": appeal.english_letter,
-            "amharic_letter": appeal.amharic_letter,
-            "created_at": appeal.created_at.isoformat() if appeal.created_at else None
+            "id": appeal["id"],
+            "name": appeal["name"],
+            "case_type": appeal["case_type"],
+            "location": appeal["location"],
+            "english_letter": appeal.get("english_letter"),
+            "amharic_letter": appeal.get("amharic_letter"),
+            "created_at": appeal.get("created_at")
         })
     
     return {"appeal_letters": result}
 
 @app.post("/api/approve-story/{story_id}")
-async def approve_story(story_id: int, current_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+async def approve_story(story_id: int, current_user: Dict[str, Any] = Depends(get_current_admin_user)):
     """Approve a story (admin only)"""
-    story = db.query(Story).filter(Story.id == story_id).first()
-    
-    if not story:
+    found = supabase.table("stories").select("id").eq("id", story_id).limit(1).execute()
+    if not found.data:
         raise HTTPException(status_code=404, detail="Story not found")
-    
-    story.is_approved = True
-    db.commit()
+    supabase.table("stories").update({"is_approved": True}).eq("id", story_id).execute()
     
     return {
         "message": "Story approved successfully",

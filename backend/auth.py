@@ -1,12 +1,10 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
-from database import get_db
-from models import User
+from database import get_supabase
 import os
 from dotenv import load_dotenv
 
@@ -50,57 +48,62 @@ def verify_token(token: str) -> Optional[dict]:
     except JWTError:
         return None
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)) -> User:
-    """Get the current authenticated user"""
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
+    """Get the current authenticated user from Supabase"""
     token = credentials.credentials
     payload = verify_token(token)
-    
+
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    user_id: int = payload.get("sub")
+
+    user_id = payload.get("sub")
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    user = db.query(User).filter(User.id == user_id).first()
-    if user is None:
+
+    supabase = get_supabase()
+    res = supabase.table("users").select("*").eq("id", user_id).execute()
+    data = res.data or []
+    if not data:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    if not user.is_active:
+    user = data[0]
+    if not user.get("is_active", True):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Inactive user",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     return user
 
-def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
+def get_current_admin_user(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
     """Get the current authenticated admin user"""
-    if not current_user.is_admin:
+    if not current_user.get("is_admin", False):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
     return current_user
 
-def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
-    """Authenticate a user with username and password"""
-    user = db.query(User).filter(User.username == username).first()
-    if not user:
+def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
+    """Authenticate a user with username and password via Supabase"""
+    supabase = get_supabase()
+    res = supabase.table("users").select("*").eq("username", username).limit(1).execute()
+    data = res.data or []
+    if not data:
         return None
-    if not verify_password(password, user.hashed_password):
+    user = data[0]
+    if not verify_password(password, user.get("hashed_password", "")):
         return None
-    return user 
+    return user

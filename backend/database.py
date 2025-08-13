@@ -1,23 +1,17 @@
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+from supabase import create_client, Client
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Load env from backend/.env before reading variables
+load_dotenv()
 
-if not DATABASE_URL:
-    raise RuntimeError(
-        "DATABASE_URL environment variable is required and must point to your Supabase Postgres connection string."
-    )
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("SUPABASE configuration missing. Set SUPABASE_URL to https://<project>.supabase.co and SUPABASE_KEY.")
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def get_supabase() -> Client:
+    return supabase
