@@ -77,6 +77,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const { access_token, user: userData } = response.data;
 
             setToken(access_token);
+            // Set header immediately to avoid race before useEffect runs
+            api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
             setUser(userData);
             localStorage.setItem('token', access_token);
 
@@ -98,6 +100,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const { access_token, user: userData } = response.data;
 
             setToken(access_token);
+            // Set header immediately to avoid race before useEffect runs
+            api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
             setUser(userData);
             localStorage.setItem('token', access_token);
 
